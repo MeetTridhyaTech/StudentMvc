@@ -1,0 +1,136 @@
+﻿@model List<StudentMvcApp.Models.Student>
+@using StudentMvcApp.Enums
+
+@{
+    ViewData["Title"] = "Student Index";
+}
+
+<h2 class="text-primary mb-3">Student List</h2>
+<h4 class="text-info">@ViewBag.TitleMessage</h4>
+
+<!-- Optional calendar -->
+<div class="mb-3">
+    @Html.Partial("_Calendar", (DateTime?)ViewBag.Today)
+</div>
+
+<p class="text-muted fst-italic">@ViewData["Note"]</p>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+<!-- Add Button -->
+<div class="text-end mb-3">
+    <a href="/Student/Create" class="btn btn-success px-4">+ Add New Student</a>
+</div>
+
+<!-- 🔹 Add this search input just above the grid -->
+<div class="mb-3">
+    <input type="text"
+           id="searchBox"
+           class="form-control"
+           placeholder="Search by name or course…" />
+</div>
+
+
+<!-- Kendo Grid Container -->
+<div id="grid" class="border rounded shadow-sm p-2 bg-white"></div>
+
+<!-- Custom styling -->
+<style>
+    .k-grid .k-filter-row th .k-icon,
+    .k-grid .k-header .k-icon {
+        font-size: 14px !important;
+        line-height: normal !important;
+        vertical-align: middle;
+    }
+
+    .k-grid-header th {
+        font-size: 14px;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            const grid = $("#grid").kendoGrid({
+                dataSource: {
+                    transport: {
+                        read: {
+                            url: "/Student/GetStudents",
+                            dataType: "json"
+                        }
+                    },
+                    pageSize: @((int)PageSize.Ten)
+                },
+                height: 500,
+                pageable: {
+                    buttonCount: 5,
+                    pageSizes: [@((int)PageSize.Five), @((int)PageSize.Ten), @((int)PageSize.Fifteen), @((int)PageSize.Hundred)]
+                },
+                sortable: true,
+                filterable: true,
+                columns: [
+                    { field: "id", title: "ID", width: "80px" },
+                    { field: "name", title: "Name", width: "200px" },
+                    { field: "courseNames", title: "Courses", width: "200px" },
+                            {
+                        title: "Actions",
+                        template:
+                            `<a href='/Student/Edit/#=id#' class='btn btn-sm btn-outline-primary me-2'>Edit</a>
+                             <a href='/Student/Delete/#=id#' class='btn btn-sm btn-outline-danger'>Delete</a>`,
+                        width: 220
+                    }
+                ],
+                            dataBound: function () {
+                const grid = this;
+                const data = grid.dataSource.view();
+
+                grid.tbody.find("tr.k-no-data").remove();
+
+                if (data.length === 0) {
+                    const colspan = grid.columns.length;
+                    const noDataRow = `
+                        <tr class="k-no-data">
+                            <td colspan="${colspan}">
+                                <div style="text-align:center; font-size:16px; padding:15px; font-weight:bold; color:red;">
+                                    No data found
+                                </div>
+                            </td>
+                        </tr>`;
+                    grid.tbody.append(noDataRow);
+                }
+            }
+        // }).data("kendoGrid");
+            }).data("kendoGrid");
+
+            // Search logic
+            $("#searchBox").on("keyup", function () {
+                const value = $(this).val();
+                grid.dataSource.filter(
+                    value
+                        ? {
+                            logic: "or",
+                            filters: [
+                                { field: "name", operator: "contains", value: value },
+        {
+            field: "courseNames",
+            title: "Courses",
+            width: "250px",
+            template: function (dataItem) {
+                if (!dataItem.courseNames) return "";
+                return dataItem.courseNames.split(",").map(c =>
+                    `<span class="badge bg-info text-dark me-1">${c.trim()}</span>`
+                ).join(" ");
+            }
+        }
+                                    ]
+                        }
+                        : null
+                );
+            });
+        });
+    </script>
+}
+

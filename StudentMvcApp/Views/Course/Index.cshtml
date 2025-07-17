@@ -1,0 +1,182 @@
+﻿@model List<StudentMvcApp.Models.Course>
+@using StudentMvcApp.Enums
+
+@{
+    ViewData["Title"] = "Course Index";
+}
+
+<h2 class="text-primary mb-3">Course List</h2>
+<h4 class="text-info">@ViewBag.TitleMessage</h4>
+
+<div class="mb-3">
+    @Html.Partial("_Calendar", (DateTime?)ViewBag.Today)
+</div>
+
+<p class="text-muted fst-italic">@ViewData["Note"]</p>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+@* <a href="/Report/DownloadDoc" class="btn btn-outline-primary">Download DOC</a> *@
+@* <a href="@Url.Action("DownloadCourseReport", "Report")" class="btn btn-primary"> *@
+@*     <i class="fas fa-file-word"></i> Download Full Course Report *@
+@* </a> *@
+
+
+<a href="@Url.Action("DownloadCourseReport", "Report", new { format = "docx" })" class="btn btn-primary me-2">
+    <i class="fas fa-file-word"></i> Export to Word
+</a>
+
+<a href="@Url.Action("DownloadCourseReport", "Report", new { format = "pdf" })" class="btn btn-danger me-2">
+    <i class="fas fa-file-pdf"></i> Export to PDF
+</a>
+
+
+@* <a href="@Url.Action("DownloadCourseReport", "Report")" class="btn btn-primary me-2"> *@
+@*     <i class="fas fa-file-word"></i> Export to Word *@
+@* </a> *@
+
+@* <a href="@Url.Action("DownloadCoursePdf", "Report")" class="btn btn-danger me-2"> *@
+@*     <i class="fas fa-file-pdf"></i> Export to PDF *@
+@* </a> *@
+
+
+
+
+<div class="text-end mb-3">
+    <a href="/Course/Create" class="btn btn-success px-4">+ Add New Course</a>
+</div>
+
+<div class="mb-3">
+    <input type="text" id="searchBox" class="form-control" placeholder="Search by course name…" />
+</div>
+
+<div id="grid" class="border rounded shadow-sm p-2 bg-white"></div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://kendo.cdn.telerik.com/2023.3.1010/js/kendo.all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
+
+    <style>
+        .k-grid .k-grid {
+            margin-top: 10px;
+            background-color: #f9f9f9;
+        }
+    </style>
+
+    <script>
+        $(document).ready(function () {
+            const grid = $("#grid").kendoGrid({
+                dataSource: {
+                    transport: {
+                        read: {
+                            url: "/Course/GetAll",
+                            dataType: "json"
+                        }
+                    },
+                    pageSize: @((int)PageSize.Ten)
+                },
+                height: 500,
+                pageable: {
+                    buttonCount: 5,
+                    pageSizes: [@((int)PageSize.Five), @((int)PageSize.Ten), @((int)PageSize.Fifteen), @((int)PageSize.Hundred)]
+                },
+                sortable: true,
+                filterable: true,
+                detailInit: function (e) {
+                    $("<div/>").appendTo(e.detailCell).kendoGrid({
+                        dataSource: {
+                            data: e.data.subCourse,
+                            schema: {
+                                model: {
+                                    fields: {
+                                        id: { type: "number" },
+                                        name: { type: "string" }
+                                    }
+                                }
+                            },
+                            pageSize: 5
+                        },
+                        sortable: true,
+                        filterable: true,
+                        // pageable: {
+                        //     refresh: true,
+                        //     pageSizes: true,
+                        //     buttonCount: 5
+                        // },
+                        columns: [
+                            { field: "id", title: "SubCourse ID", width: "120px" },
+                            { field: "name", title: "SubCourse Name", width: "300px" }
+                        ]
+                    });
+                },
+                columns: [
+                    { field: "id", title: "ID", width: "80px" },
+                    { field: "name", title: "Course Name", width: "250px" },
+                    {
+                        title: "Actions",
+                        width: "200px",
+                        template: function (dataItem) {
+                            return `
+                                <a href='/Course/EditView/${dataItem.id}' class='btn btn-sm btn-outline-primary me-2'>Edit</a>
+                                <button class='btn btn-sm btn-outline-danger delete-course' data-id='${dataItem.id}'>Delete</button>`;
+                        }
+                    }
+                ],
+                dataBound: function () {
+                    const grid = this;
+                    const data = grid.dataSource.view();
+
+                    grid.tbody.find("tr.k-no-data").remove();
+
+                    if (data.length === 0) {
+                        const colspan = grid.columns.length;
+                        const noDataRow = `
+                            <tr class="k-no-data">
+                                <td colspan="${colspan}">
+                                    <div style="text-align:center; font-weight:bold; color:red;">No data found</div>
+                                </td>
+                            </tr>`;
+                        grid.tbody.append(noDataRow);
+                    }
+
+                    $(".delete-course").click(function () {
+                        const courseId = $(this).data("id");
+                        if (confirm("Are you sure you want to delete this course?")) {
+                            $.ajax({
+                                type: "POST",
+                                url: "/Course/DeleteJson",
+                                contentType: "application/json",
+                                data: JSON.stringify(courseId),
+                                success: function (res) {
+                                    toastr.success(res.message, "Success");
+                                    $("#grid").data("kendoGrid").dataSource.read();
+                                },
+                                error: function (xhr) {
+                                    alert("Error: " + (xhr.responseJSON?.message || "Something went wrong."));
+                                }
+                            });
+                        }
+                    });
+                }
+            }).data("kendoGrid");
+
+            // Search
+            $("#searchBox").on("keyup", function () {
+                const value = $(this).val();
+                grid.dataSource.filter(
+                    value
+                        ? {
+                            logic: "or",
+                            filters: [{ field: "name", operator: "contains", value: value }]
+                        }
+                        : null
+                );
+            });
+        });
+    </script>
+}

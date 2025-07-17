@@ -1,0 +1,56 @@
+﻿@model StudentMvcApp.Models.Course
+
+@{
+    ViewData["Title"] = "Edit Course";
+}
+
+<h2>Edit Course</h2>
+
+<!-- jQuery CDN -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<form id="editCourseForm">
+    <input type="hidden" id="Id" value="@Model.Id" />
+
+    <div class="form-group">
+        <label for="Name">Course Name</label>
+        <input type="text" id="Name" value="@Model.Name" class="form-control" />
+        <span class="text-danger" id="nameError"></span>
+    </div>
+
+    <br />
+    <button type="submit" class="btn btn-primary">Update</button>
+    <a href="/Course/Index" class="btn btn-secondary">Cancel</a>
+</form>
+
+<script>
+    $(document).ready(function () {
+        $("#editCourseForm").on("submit", function (e) {
+            e.preventDefault();
+
+    const course = {
+        id: parseInt($("#Id").val()),     
+        name: $("#Name").val()
+    };
+
+            $.ajax({
+                type: "POST",
+                url: "/Course/EditJson",
+                contentType: "application/json",
+                data: JSON.stringify(course),
+                success: function (res) {
+                    alert(res.message);
+                    window.location.href = "/Course/Index";
+                },
+                error: function (xhr) {
+                    const errors = xhr.responseJSON;
+                    if (errors && errors.Name) {
+                        $("#nameError").text(errors.Name.join(", "));
+                    } else {
+                        alert("Something went wrong.");
+                    }
+                }
+            });
+        });
+    });
+</script>

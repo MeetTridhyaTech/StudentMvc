@@ -1,0 +1,233 @@
+﻿@* @model StudentMvcApp.Models.Course *@
+
+@* @{ *@
+@*     ViewData["Title"] = "Create Course"; *@
+@* } *@
+
+@* <h2>Create Course</h2> *@
+
+@* <!-- Toast & jQuery --> *@
+@* <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" /> *@
+@* <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> *@
+@* <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script> *@
+
+@* <form id="courseForm"> *@
+
+
+@*     <div class="form-group mb-3"> *@
+@*         <label for="ParentCourseId">Main Course</label> *@
+@*         <select id="ParentCourseId" name="ParentCourseId" class="form-control"> *@
+@*             <option value="">-- None (Main Course) --</option> *@
+@*         </select> *@
+@*     </div> *@
+
+@*     <div class="form-group mb-3"> *@
+@*         <label for="Name">Course Name(Sub Course)</label> *@
+@*         <input type="text" id="Name" name="Name" class="form-control" /> *@
+@*         <span class="text-danger" id="nameError"></span> *@
+@*     </div> *@
+
+@*     <button type="submit" class="btn btn-success">Create</button> *@
+@*     <a href="/Course/Index" class="btn btn-secondary">Cancel</a> *@
+@* </form> *@
+
+@* @section Scripts { *@
+@*     <script> *@
+@*         // Toastr Options *@
+@*         toastr.options = { *@
+@*             "closeButton": true, *@
+@*             "progressBar": true, *@
+@*             "positionClass": "toast-top-right", *@
+@*             "timeOut": "3000" *@
+@*         }; *@
+
+@*         $(document).ready(function () { *@
+@*             // Load parent courses *@
+@*             $.get("/Course/GetAll", function (courses) { *@
+@*                 courses.forEach(course => { *@
+@*                     $("#ParentCourseId").append( *@
+@*                         new Option(course.name, course.id) *@
+@*                     ); *@
+@*                 }); *@
+@*             }); *@
+
+@*             // Handle form submit *@
+@*             $("#courseForm").on("submit", function (e) { *@
+@*                 e.preventDefault(); *@
+
+@*                 const course = { *@
+@*                     Name: $("#Name").val(), *@
+@*                     ParentCourseId: $("#ParentCourseId").val() || null *@
+@*                 }; *@
+
+@*                 $.ajax({ *@
+@*                     type: "POST", *@
+@*                     url: "/Course/CreateJson", *@
+@*                     contentType: "application/json", *@
+@*                     data: JSON.stringify(course), *@
+@*                     success: function (res) { *@
+@*                         toastr.success(res.message, "Success ✅"); *@
+@*                         setTimeout(() => { *@
+@*                             window.location.href = "/Course/Index"; *@
+@*                         }, 1500); *@
+@*                     }, *@
+@*                     error: function (xhr) { *@
+@*                         const errors = xhr.responseJSON; *@
+@*                         if (errors && errors.Name) { *@
+@*                             $("#nameError").text(errors.Name.join(", ")); *@
+@*                             toastr.error(errors.Name.join(", "), "Validation Error ❌"); *@
+@*                         } else { *@
+@*                             toastr.error("Something went wrong.", "Error"); *@
+@*                         } *@
+@*                     } *@
+@*                 }); *@
+@*             }); *@
+@*         }); *@
+@*     </script> *@
+@* } *@
+
+
+@model StudentMvcApp.Models.Course
+
+@{
+    ViewData["Title"] = "Create Course";
+}
+
+<h2>Create Course</h2>
+
+<!-- Toast & Kendo UI Styles -->
+<link href="https://kendo.cdn.telerik.com/2023.3.1010/styles/kendo.default-v2.min.css" rel="stylesheet" />
+<link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
+
+<!-- jQuery + Kendo + Toastr Scripts -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://kendo.cdn.telerik.com/2023.3.1010/js/kendo.all.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+<form id="courseForm">
+    <div class="form-group mb-3">
+        <label for="ParentCourseId">Main Course</label>
+        <input id="ParentCourseId" name="ParentCourseId" style="width: 100%;" />
+    </div>
+
+    <div class="form-group mb-3">
+        <label for="Name">Course Name (Sub Course)</label>
+        <input type="text" id="Name" name="Name" class="form-control" />
+        <span class="text-danger" id="nameError"></span>
+    </div>
+
+    <button type="submit" class="btn btn-success">Create</button>
+    <a href="/Course/Index" class="btn btn-secondary">Cancel</a>
+</form>
+
+@section Scripts {
+    <script>
+        toastr.options = {
+            "closeButton": true,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "timeOut": "3000"
+        };
+
+        $(document).ready(function () {
+            // Initialize Kendo ComboBox
+            const combo = $("#ParentCourseId").kendoComboBox({
+                placeholder: "Select or type to create...",
+                dataTextField: "name",
+                dataValueField: "id",
+                filter: "contains",
+                suggest: true,
+                minLength: 2,
+                autoBind: true,
+                dataSource: {
+                    transport: {
+                        read: {
+                            url: "/Course/GetAll",
+                            dataType: "json"
+                        }
+                    }
+                },
+                noDataTemplate: kendo.template(
+                    "<div class='no-data'>No match. Press Enter to create: <strong>#: instance.input.val() #</strong></div>"
+                ),
+        filtering: function (e) {
+            const inputVal = e.filter?.value;
+            if (!inputVal) return;
+
+            this.input.off("keydown").on("keydown", (ev) => {
+                if (ev.key === "Enter") {
+                    ev.preventDefault();
+
+                    // Show creating toast
+                    const creatingToast = toastr.info(
+                        `Creating "${inputVal}"...`,
+                        "Creating New Course",
+                        {timeOut: 0}
+                    );
+
+                    $.ajax({
+                        type: "POST",
+                        url: "/Course/CreateJson",
+                        data: JSON.stringify({ Name: inputVal }),
+                        contentType: "application/json",
+                        success: (res) => {
+                            toastr.remove(creatingToast); // Remove creating toast
+                            toastr.success(`"${res.name}" created!`, "✅ Success", {timeOut: 2000});
+
+                            // Add to combobox
+                            this.dataSource.add({ id: res.id, name: res.name });
+                            this.value(res.id);
+                        },
+                        error: (xhr) => {
+                            toastr.remove(creatingToast);
+                            toastr.error(xhr.responseJSON?.message || "Creation failed", "❌ Error");
+                        }
+                    });
+                }
+            });
+        }
+            }).data("kendoComboBox");
+
+            // Form Submission
+        $("#courseForm").on("submit", function (e) {
+            e.preventDefault();
+
+            // Client-side validation
+            if (!$("#Name").val().trim()) {
+                toastr.error("Course name is required", "Validation Error ❌");
+                return;
+            }
+
+            // Show loading state
+            toastr.info("Creating course...", "Processing", {timeOut: 0});
+
+            $.ajax({
+                type: "POST",
+                url: "/Course/CreateJson",
+                contentType: "application/json",
+                data: JSON.stringify({
+                    Name: $("#Name").val(),
+                    ParentCourseId: combo.value() || null
+                }),
+                success: function (res) {
+                    // Success toast (auto-close after 3 sec)
+                    toastr.clear(); // Clear loading toast
+                    toastr.success(`"${res.name}" created successfully!`, "✅ Success", {
+                        timeOut: 3000,
+                        onHidden: () => window.location.href = "/Course/Index"
+                    });
+                },
+                error: function (xhr) {
+                    toastr.clear(); // Clear loading toast
+                    const error = xhr.responseJSON;
+                    if (error?.errors?.Name) {
+                        toastr.error(error.errors.Name[0], "Validation Error ❌");
+                    } else {
+                        toastr.error(error?.message || "Failed to create course", "Error ❌");
+                    }
+                }
+            });
+        });
+        });
+    </script>
+}

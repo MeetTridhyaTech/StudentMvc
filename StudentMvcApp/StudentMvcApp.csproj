@@ -1,28 +1,62 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="BouncyCastle.NetCore" Version="2.2.1" />
-    <PackageReference Include="DocumentFormat.OpenXml" Version="3.3.0" />
-    <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.1" />
-	  <PackageReference Include="itext7" Version="7.2.5" />
-	  <PackageReference Include="itext.bouncy-castle-adapter" Version="7.2.5" />
-	  <PackageReference Include="itext7.font-asian" Version="7.2.5" />
-	  <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.7" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.7">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.3" />
-  </ItemGroup>
+	<ItemGroup>
+		<Compile Remove="Reports\**" />
+		<Content Remove="Reports\**" />
+		<EmbeddedResource Remove="Reports\**" />
+		<None Remove="Reports\**" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="wwwroot\files\" />
-  </ItemGroup>
+	<ItemGroup>
+	  <None Remove="wwwroot\Reportss\Report1.rdlc" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="AspNetCore.Reporting" Version="2.1.0" />
+		<PackageReference Include="BouncyCastle.NetCore" Version="2.2.1" />
+		<PackageReference Include="DocumentFormat.OpenXml" Version="3.3.0" />	
+		<PackageReference Include="FluentValidation.AspNetCore" Version="11.3.1" />
+		<PackageReference Include="itext7" Version="7.2.5" />
+		<PackageReference Include="itext.bouncy-castle-adapter" Version="7.2.5" />
+		<PackageReference Include="itext7.font-asian" Version="7.2.5" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.7" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.7">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.3" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\StudentMvcApp.Models\StudentMvcApp.Models.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Compile Update="meetdbDataSet.Designer.cs">
+	    <DesignTime>True</DesignTime>
+	    <AutoGen>True</AutoGen>
+	    <DependentUpon>meetdbDataSet.xsd</DependentUpon>
+	  </Compile>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Content Update="wwwroot\Reportss\Report1.rdlc">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="meetdbDataSet.xsd">
+	    <Generator>MSDataSetGenerator</Generator>
+	    <LastGenOutput>meetdbDataSet.Designer.cs</LastGenOutput>
+	  </None>
+	</ItemGroup>
 
 </Project>
+

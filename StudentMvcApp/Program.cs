@@ -9,6 +9,7 @@ namespace StudentMvcApp
     {
         public static void Main(string[] args)
         {
+            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.

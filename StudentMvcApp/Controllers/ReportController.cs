@@ -5,7 +5,6 @@ using StudentMvcApp.Data;
 using System.IO;
 using System.Linq;
 using System;
-
 using iTextPdf = iText.Kernel.Pdf;
 using iTextDoc = iText.Layout.Document;
 using iTextParagraph = iText.Layout.Element.Paragraph;
@@ -13,6 +12,8 @@ using iTextTable = iText.Layout.Element.Table;
 using DocumentFormat.OpenXml;
 using StudentMvcApp.Migrations;
 using Org.BouncyCastle.Crypto.IO;
+using AspNetCore.Reporting;
+using StudentMvcApp.Models;
 
 public enum ReportFormat
 {
@@ -27,6 +28,35 @@ public class ReportController : Controller
     public ReportController(StudentDbContext context)
     {
         _context = context;
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+    }
+
+    [HttpGet("Report/download-rdlc")]
+    public IActionResult DownloadRdlc()
+    {
+        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Reportss", "Report1.rdlc");
+
+        var courseData = _context.Courses  
+            .Where(c => !c.IsDeleted && c.SubCourses.Any(sub => !sub.IsDeleted))
+            .SelectMany(parent => parent.SubCourses!
+                .Where(sub => !sub.IsDeleted), 
+                (parent, sub) => new CourseReportViewModel
+                {
+                    CourseId = parent.ParentCourseId == null ? parent.Id : parent.ParentCourseId.Value,
+                    CourseName = parent.ParentCourseId == null ? parent.Name : parent.ParentCourse!.Name,
+                    SubCourseId = sub.Id,
+                    SubCourseName = sub.Name
+                })
+            .ToList();
+
+
+
+        LocalReport report = new LocalReport(reportPath);
+        report.AddDataSource("CourseDataSet", courseData); 
+
+        var result = report.Execute(RenderType.Pdf, 1, null, "");
+
+        return File(result.MainStream, "application/pdf", "CourseReport_RDLC.pdf");
     }
 
     [HttpGet]

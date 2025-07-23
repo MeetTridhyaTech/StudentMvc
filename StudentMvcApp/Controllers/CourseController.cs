@@ -9,7 +9,7 @@ namespace StudentMvcApp.Controllers
     {
         private readonly StudentDbContext _context;
 
-        public CourseController(StudentDbContext context)
+        public CourseController(StudentDbContext context) 
         {
             _context = context;
         }
@@ -26,7 +26,7 @@ namespace StudentMvcApp.Controllers
         [HttpGet]
         [Route("Course/GetAll")]
         public IActionResult GetAll()
-        {
+        {  
             var courses = _context.Courses
                 .Where(c => !c.IsDeleted && c.ParentCourseId== null)
                 .Select(c => new
@@ -36,11 +36,11 @@ namespace StudentMvcApp.Controllers
                 subCourse = _context.Courses
                     .Where(sc => sc.ParentCourseId == c.Id && !sc.IsDeleted)
                     .Select(sc => new { id = sc.Id, name = sc.Name })
-                    .ToList()
+                    .ToList() 
                 }).ToList();
                 
             return Json(courses);
-        }
+        } 
 
         [HttpGet]
         [Route("Course/GetSubCourses/{parentId}")]
@@ -49,7 +49,7 @@ namespace StudentMvcApp.Controllers
             var subCourses = _context.Courses
                 .Where(sc => sc.ParentCourseId == parentId && !sc.IsDeleted)
                 .Select(sc => new { id = sc.Id, name = sc.Name })
-                .ToList();
+                .ToList(); 
 
             return Json(subCourses);
         }

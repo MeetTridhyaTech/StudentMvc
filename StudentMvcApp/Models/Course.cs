@@ -10,6 +10,6 @@ namespace StudentMvcApp.Models
         [JsonIgnore]
         public Course? ParentCourse { get; set; }
         public List<Course>? SubCourses { get; set; }
-        public bool IsDeleted { get; set; } = false;
+        public bool IsDeleted { get; set; } = false;    
     }   
 }
